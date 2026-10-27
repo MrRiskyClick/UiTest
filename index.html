@@ -65,7 +65,7 @@ try{if(document.fullscreenElement)await document.exitFullscreen();else await doc
 catch(err){note('Fullscreen was blocked by the browser.');console.warn(err)}
 };
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').title=document.fullscreenElement?'Exit fullscreen':'Enter fullscreen'});
-setInterval(checkDeployment,15000);
+setInterval(checkDeployment,5000);
 })();
 </script>
 </body></html>
