@@ -1,5 +1,5 @@
 name: TV Focus Lab deployment
-run-name: "TV Focus Lab V0.08 — ${{ github.event.head_commit.message || 'Manual deployment' }}"
+run-name: "TV Focus Lab V0.09 — ${{ github.event.head_commit.message || 'Manual deployment' }}"
 on:
   push:
     branches: [main]
@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
-    name: Publish V0.08
+    name: Publish V0.09
     runs-on: ubuntu-latest
     environment:
       name: github-pages
