@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TV Focus Lab</title><meta name="tv-build" content="20261027-shape-profiles-23"><meta name="tv-version" content="0.22">
+<title>TV Focus Lab</title><meta name="tv-build" content="20261027-border-selection-25"><meta name="tv-version" content="0.24">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#0d1120;color:#fff;font:16px system-ui,sans-serif}button,input{font:inherit}button{cursor:pointer}.toolbar{position:sticky;top:0;z-index:10;background:#171c2d;padding:13px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}.toolbar button,.actions button,.editor button{border:1px solid #586581;background:#39445f;border-radius:8px;color:white;padding:10px 15px}.toolbar strong{color:#e5edff}.stage-wrap{position:relative;width:100%;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}.stage{flex:none;transform-origin:top left;width:2560px;height:1440px;margin:auto;padding:255px 100px;background:radial-gradient(ellipse at 10% 0%,#51439e,#292459 36%,#101024 70%,#020205);}.heading{text-align:center;letter-spacing:3px;text-transform:uppercase;font-size:21px;color:#c5c9e6;margin-bottom:48px}.row{display:flex;align-items:center;justify-content:center;gap:105px}.shows{margin-bottom:160px}.item{display:flex;flex-direction:column;align-items:center;flex-shrink:0}.tile{position:relative;isolation:isolate;border:0;background:transparent;padding:0;outline:none;transition:transform var(--focus-transition,220ms) var(--focus-easing,ease);transform-origin:var(--focus-scale-origin,center)}.tile.card{width:590px;height:332px;border-radius:var(--focus-card-radius,18px)}.tile.app{width:180px;height:180px;border-radius:50%}.tile::before{content:"";position:absolute;inset:0;background:transparent;border-radius:inherit;box-shadow:var(--focus-glow-x,0px) var(--focus-glow-y,0px) var(--focus-glow-blur,22px) var(--focus-glow-spread,10px) color-mix(in srgb,var(--focus-glow-color,#fff) var(--focus-glow-opacity,85%),transparent);opacity:0;z-index:-1;transition:opacity var(--focus-transition,220ms) var(--focus-easing,ease)}.stage.no-glow .tile::before{display:none}.tile{z-index:2}.tile.selected{transform:scale(var(--focus-scale,1.045));z-index:1}
 /* Artwork and card surfaces stay above the selected tile's blurred glow, even at large spread. */
@@ -41,6 +41,11 @@ body.embedded #fullscreen,body.embedded #deploy-status,body.embedded #version-di
 @keyframes fx-shimmer{0%,100%{filter:brightness(.65)}50%{filter:brightness(1.55)}}
 .tile .fx-layer{position:absolute;pointer-events:none;inset:0;border-radius:inherit;opacity:0;z-index:1;transition:opacity var(--focus-transition,220ms) ease}
 .tile.selected .fx-layer{opacity:1}
+/* Never paint an old focus border on a deselected tile, even if an animation
+   retains its last opacity or a transition is still completing. */
+.tile:not(.selected) .fx-border{display:none!important;animation:none!important;opacity:0!important}
+.tile:not(.selected)::after,.tile:not(.selected) .surface::after{opacity:0!important;transition:none!important}
+
 .tile .fx-layer.fx-border.fx-rotate,.tile .fx-layer.fx-border.fx-cycle,.tile .fx-layer.fx-border.fx-aurora,.tile .fx-layer.fx-border.fx-sweep,.tile .fx-layer.fx-border.fx-orbit,.tile .fx-layer.fx-border.fx-comet{background:conic-gradient(from var(--orbit-angle),var(--fx-gradient))}
 .tile .fx-layer.fx-glow,.tile .fx-layer.fx-shadow{z-index:-1}
 .tile .fx-layer.fx-border{inset:calc(-1 * var(--focus-border-offset,0px));padding:var(--focus-border-width,2px);border-radius:var(--focus-outer-radius,18px);background:var(--focus-border-color,#fff);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude}
@@ -232,7 +237,7 @@ function applyAnimatedLayers(resolved){
      }else if(img&&!img.complete&&!img.dataset.ambientListener){img.dataset.ambientListener='1';img.addEventListener('load',()=>{delete img.dataset.ambientListener;applyAnimatedLayers({...styleData.draft})},{once:true})}
    }
    if(f==='border')layer.style.backgroundColor=resolved.borderColor;
-   if(f==='border')layer.style.opacity='';
+   if(f==='border'&&!tile.classList.contains('selected'))layer.style.opacity='0';else if(f==='border')layer.style.opacity='';
    if(!(f==='glow'&&['ambilight','acc'].includes(getAnim(resolved,f,'colorSource'))))layer.style.setProperty('--fx-first',stops[0].color);
    layer.style.setProperty('--fx-duration',getAnim(resolved,f,'duration')+'s');
    if(layer._curveAnimation){layer._curveAnimation.cancel();layer._curveAnimation=null}
