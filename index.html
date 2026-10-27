@@ -26,7 +26,7 @@
 'use strict';
 const $=id=>document.getElementById(id),frame=$('launcher');
 let loadedBuild=null,loadedVersion=null,pendingBuild=null,pendingVersion=null,updating=false;
-const getMeta=(html,name)=>html.match(new RegExp('<meta\\s+name=["\\']'+name+'["\\']\\s+content=["\\']([^"\\']+)["\\']','i'))?.[1]||null;
+const getMeta=(html,name)=>{const tag=html.match(/<meta\s+name="tv-(?:build|version)"\s+content="[^"]+"/g)||[];const found=tag.find(x=>x.includes('name="'+name+'"'));return found?.match(/content="([^"]+)"/)?.[1]||null};
 function note(message){$('notice').textContent=message;$('notice').style.display='block';clearTimeout(note.timer);note.timer=setTimeout(()=>$('notice').style.display='none',3500)}
 function updateLabel(){
 const changed=!!(pendingBuild&&loadedBuild&&pendingBuild!==loadedBuild);
