@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TV Focus Lab</title>
+<title>TV Focus Lab</title><meta name="tv-build" content="20261027-shell-compat-1"><meta name="tv-version" content="0.04">
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b18;color:white;font-family:system-ui,sans-serif}
 #launcher{display:block;width:100%;height:100%;border:0;background:#0d1120}
 #fullscreen{position:fixed;z-index:5;top:18px;right:18px;width:42px;height:42px;border:0;background:#0006;color:white;border-radius:8px;display:grid;place-items:center;cursor:pointer}
 #fullscreen svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2}
 #deploy-status{position:fixed;z-index:5;top:24px;right:76px;width:28px;height:28px;border:2px solid #fffa;border-radius:50%;background:#25c96b;box-shadow:0 0 12px #0008;cursor:pointer;display:none}
-#deploy-status.outdated{background:#e63838}
+#deploy-status.outdated{background:#e63838}#deploy-status.error{background:#e9ae26}
 #version-display{position:fixed;z-index:5;right:114px;top:26px;font-size:17px;font-weight:700;text-shadow:0 1px 6px #000a;display:none;white-space:nowrap}
 :fullscreen #deploy-status,:fullscreen #version-display{display:block}
 #notice{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:5;background:#131a30e8;border-radius:8px;padding:8px 14px;display:none;font-size:13px}
@@ -25,7 +25,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),frame=$('launcher');
-let loadedBuild=null,loadedVersion=null,pendingBuild=null,pendingVersion=null,updating=false;
+let loadedBuild=null,loadedVersion=null,pendingBuild=null,pendingVersion=null,updating=false,checking=false;
 const getMeta=(html,name)=>{const tag=html.match(/<meta\s+name="tv-(?:build|version)"\s+content="[^"]+"/g)||[];const found=tag.find(x=>x.includes('name="'+name+'"'));return found?.match(/content="([^"]+)"/)?.[1]||null};
 function note(message){$('notice').textContent=message;$('notice').style.display='block';clearTimeout(note.timer);note.timer=setTimeout(()=>$('notice').style.display='none',3500)}
 function updateLabel(){
@@ -44,18 +44,20 @@ loadedVersion=doc.querySelector('meta[name="tv-version"]')?.content||loadedVersi
 updating=false;updateLabel();checkDeployment();
 });
 async function checkDeployment(){
+if(checking)return;checking=true;
 try{
 const response=await fetch('launcher.html?deployment_check='+Date.now(),{cache:'no-store'});
 if(!response.ok)throw Error('HTTP '+response.status);
 const html=await response.text();
-pendingBuild=getMeta(html,'tv-build');
-pendingVersion=getMeta(html,'tv-version');
-updateLabel();
-}catch(err){console.warn('Deployment check failed',err)}
+const nextBuild=getMeta(html,'tv-build'),nextVersion=getMeta(html,'tv-version');
+if(!nextBuild||!nextVersion)throw Error('Missing deployment version metadata');
+pendingBuild=nextBuild;pendingVersion=nextVersion;
+$('deploy-status').classList.remove('error');updateLabel();
+}catch(err){$('deploy-status').classList.add('error');$('deploy-status').title='Update check failed — click to retry';console.warn('Deployment check failed',err)}finally{checking=false}
 }
 function hotUpdate(){
 if(updating)return;
-if(!pendingBuild||pendingBuild===loadedBuild){checkDeployment();return}
+if(!pendingBuild||pendingBuild===loadedBuild){note('Checking for updates…');checkDeployment();return}
 updating=true;note('Updating launcher without leaving fullscreen…');
 frame.src='launcher.html?hotupdate='+Date.now();
 }
